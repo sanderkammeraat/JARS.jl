@@ -1,1 +1,5 @@
 /Manifest*.toml
+.DS_Store
+docs/build/
+*.jld2
+*.h5
