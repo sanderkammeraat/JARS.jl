@@ -87,7 +87,7 @@ end
 Figure1col() = Figure(size = (8.5cm, 8.5cm))
 Figure2col() = Figure(size = (17cm, 8.5cm))
 
-function adjust_height!(f, aspect)
+function adjust_height!(f; aspect =4/3)
     W  = f.scene.viewport[].widths[1]
     gl = f.layout
     done = Set{Int}()
@@ -162,39 +162,49 @@ function hide_repeated_labels!(items, dir::Symbol)
         end
     end
 end
+# pick the subset of (row, col, ax) items to act on
+function select_items(items, cells)
+    cells === :all && return items
+    cells isa Tuple && return [it for it in items if it[1] in cells[1] && it[2] in cells[2]]
+    return [it for it in items if any(ax -> ax === it[3], cells)]   # vector of Axis
+end
 
-function compress_whitespace!(f; sharex = false, sharey = false, sharexlabel = sharex, shareylabel = sharey,
-    gap = 4, col_gap = gap, row_gap = gap, aspect = 4/3)
-    gl    = f.layout
-    items = axes_with_positions(gl)
-
-    if sharex   # per column: link x, keep tick labels only on the bottom axis
-        for col in unique(c for (_, c, _) in items)
-            axs = [ax for (_, _, ax) in sort([it for it in items if it[2] == col]; by = first)]
-            length(axs) > 1 || continue
+function share_dir!(items, dir::Symbol)
+    group = dir === :x ? 2 : 1          # x: per column, y: per row
+    order = dir === :x ? 1 : 2
+    for g in unique(it[group] for it in items)
+        axs = [it[3] for it in sort([it for it in items if it[group] == g]; by = it -> it[order])]
+        length(axs) > 1 || continue
+        if dir === :x
             linkxaxes!(axs...)
             foreach(ax -> hidexdecorations!(ax; ticks = false, minorticks = false), axs[1:end-1])
-        end
-    end
-
-    if sharey   # per row: link y, keep tick labels only on the leftmost axis
-        for row in unique(r for (r, _, _) in items)
-            axs = [ax for (_, _, ax) in sort([it for it in items if it[1] == row]; by = it -> it[2])]
-            length(axs) > 1 || continue
+        else
             linkyaxes!(axs...)
             foreach(ax -> hideydecorations!(ax; ticks = false, minorticks = false), axs[2:end])
         end
     end
+end
 
-    sharexlabel && hide_repeated_labels!(items, :x)
-    shareylabel && hide_repeated_labels!(items, :y)
-
-    prune_neighbours!(items)
-    equalize_ticklabelspace!(last.(items))
-    colgap!(gl, col_gap)
-    rowgap!(gl, row_gap)
-    adjust_height!(f, aspect)
+function share!(f; x = false, y = false, xlabel = x, ylabel = y, cells = :all)
+    items = select_items(axes_with_positions(f.layout), cells)
+    x      && share_dir!(items, :x)
+    y      && share_dir!(items, :y)
+    xlabel && hide_repeated_labels!(items, :x)
+    ylabel && hide_repeated_labels!(items, :y)
     return f
 end
 
-export Figure1col, Figure2col, compress_whitespace!
+
+function compress_whitespace!(f; sharex = false, sharey = false,
+                              sharexlabel = sharex, shareylabel = sharey,
+                              gap = 4, colgap = gap, rowgap = gap, aspect = 4/3)
+    share!(f; x = sharex, y = sharey, xlabel = sharexlabel, ylabel = shareylabel)
+    items = axes_with_positions(f.layout)
+    prune_neighbours!(items)
+    equalize_ticklabelspace!(last.(items))
+    colgap!(f.layout, colgap)
+    rowgap!(f.layout, rowgap)
+    adjust_height!(f; aspect)
+    return f
+end
+export Figure1col, Figure2col, compress_whitespace!, share!, adjust_height!
