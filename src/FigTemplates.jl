@@ -163,7 +163,8 @@ function hide_repeated_labels!(items, dir::Symbol)
     end
 end
 
-function compress_whitespace!(f; sharex = false, sharey = false, sharexlabel = sharex, shareylabel = sharey, gap = 4, aspect = 4/3)
+function compress_whitespace!(f; sharex = false, sharey = false, sharexlabel = sharex, shareylabel = sharey,
+    gap = 4, col_gap = gap, row_gap = gap, aspect = 4/3)
     gl    = f.layout
     items = axes_with_positions(gl)
 
@@ -190,8 +191,8 @@ function compress_whitespace!(f; sharex = false, sharey = false, sharexlabel = s
 
     prune_neighbours!(items)
     equalize_ticklabelspace!(last.(items))
-    colgap!(gl, gap)
-    rowgap!(gl, gap)
+    colgap!(gl, col_gap)
+    rowgap!(gl, row_gap)
     adjust_height!(f, aspect)
     return f
 end
