@@ -7,8 +7,16 @@ using LinearAlgebra
 using Reexport
 using DataFrames
 using Statistics
+using ProgressMeter
+using StaticArrays
 
-#This order is dictated by https://github.com/dawbarton/TeXLayout.jl
+#Convenience export of packages for new users. Discutable practice...
+@reexport using LinearAlgebra
+@reexport using Statistics
+@reexport using DataFrames
+
+
+#The following order is dictated by https://github.com/dawbarton/TeXLayout.jl
 #Shout out to David Barton for this nice package!
 using TeXLayout
 using CairoMakie, LaTeXStrings

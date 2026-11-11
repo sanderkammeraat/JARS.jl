@@ -133,14 +133,16 @@ function prune_neighbours!(items)
     end
 end
 
-function equalize_ticklabelspace!(axs)
-    ys = [ax for ax in axs if ax.yticklabelsvisible[]]   # skip hidden labels
-    if !isempty(ys)
+function equalize_ticklabelspace!(items)
+    for col in unique(it[2] for it in items)
+        ys = [it[3] for it in items if it[2] == col && it[3].yticklabelsvisible[]]
+        isempty(ys) && continue
         s = maximum(tight_yticklabel_spacing!, ys)
         foreach(ax -> ax.yticklabelspace = s, ys)
     end
-    xs = [ax for ax in axs if ax.xticklabelsvisible[]]
-    if !isempty(xs)
+    for row in unique(it[1] for it in items)
+        xs = [it[3] for it in items if it[1] == row && it[3].xticklabelsvisible[]]
+        isempty(xs) && continue
         s = maximum(tight_xticklabel_spacing!, xs)
         foreach(ax -> ax.xticklabelspace = s, xs)
     end
@@ -198,13 +200,38 @@ end
 function compress_whitespace!(f; sharex = false, sharey = false,
                               sharexlabel = sharex, shareylabel = sharey,
                               gap = 4, colgap = gap, rowgap = gap, aspect = 4/3)
+    for (_, _, ax) in axes_with_positions(f.layout)
+        reset_limits!(ax)
+    end
     share!(f; x = sharex, y = sharey, xlabel = sharexlabel, ylabel = shareylabel)
     items = axes_with_positions(f.layout)
     prune_neighbours!(items)
-    equalize_ticklabelspace!(last.(items))
+    equalize_ticklabelspace!(items)
     colgap!(f.layout, colgap)
     rowgap!(f.layout, rowgap)
     adjust_height!(f; aspect)
     return f
 end
-export Figure1col, Figure2col, compress_whitespace!, share!, adjust_height!
+
+function label_panels!(f; inside = false, order = :row,
+                       fmt   = i -> "($('a' + i - 1))",
+                       pos   = (0.04, 0.96),
+                       at    = Dict{Int,NTuple{2,Float64}}(),
+                       font  = :regular,
+                       raise = 0.6 * Makie.theme(:fontsize)[])   # lift for outside labels
+    items = axes_with_positions(f.layout)
+    sort!(items; by = it -> order === :row ? (it[1], it[2]) : (it[2], it[1]))
+    for (i, (r, c, ax)) in enumerate(items)
+        if inside
+            p = get(at, i, pos)
+            text!(ax, p...; text = fmt(i), space = :relative, font = font,
+                  align = (p[1] < 0.5 ? :left : :right, p[2] < 0.5 ? :bottom : :top))
+        else
+            Label(f[r, c, TopLeft()], fmt(i); font = font,
+                  halign = :right, valign = :bottom,
+                  padding = (0, 4, raise, 0))    # (left, right, bottom, top)
+        end
+    end
+    return f
+end
+export Figure1col, Figure2col, compress_whitespace!, share!, adjust_height!, label_panels!
