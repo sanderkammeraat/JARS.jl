@@ -14,6 +14,7 @@ using StaticArrays
 @reexport using LinearAlgebra
 @reexport using Statistics
 @reexport using DataFrames
+@reexport using HDF5
 
 
 #The following order is dictated by https://github.com/dawbarton/TeXLayout.jl

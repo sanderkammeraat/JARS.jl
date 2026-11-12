@@ -146,6 +146,11 @@ mutable struct PolarTrajectories
     pz
 end
 
+pos(T) = (T.x, T.y, T.z)
+vel(T) = (T.vx, T.vy, T.vz)
+pol(T) = (T.px, T.py, T.pz)
+
+
 function findfile(directory, filepattern)
 
     paths = String[]
