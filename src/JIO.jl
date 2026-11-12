@@ -24,11 +24,13 @@ function initialize_file(save_path; mode::Symbol=:new)
     end
 end
 
-function add_metadata!(analysis_file, raw_data)
-
-    copy_object(raw_data, "system", analysis_file, "system")
-    copy_object(raw_data, "integration_info", analysis_file, "integration_info")
-
+function add_metadata!(analysis_file, raw_data_file_path::AbstractString;
+                       groups = ("system", "integration_info"))
+    h5open(raw_data_file_path, "r") do src
+        for g in groups
+            copy_object(src, g, analysis_file, g)
+        end
+    end
     return analysis_file
 end
 
@@ -41,7 +43,7 @@ function analyze_single(custom_analysis_function, analysis_save_path, raw_data_f
         try
             analysis_file = initialize_file(analysis_save_path; mode)
             if mode==:new
-                add_metadata!(analysis_file, raw_data)
+                add_metadata!(analysis_file, raw_data_file_path)
             end
 
             try
@@ -69,7 +71,7 @@ function save_dict2h5!(file, dict, dictsavename)
 end
 
 
-function extract_frame_data(datakey, frame_data; type = type)
+function extract_frame_data(datakey, frame_data; type = nothing)
 
     if isnothing(type)
         return frame_data[datakey]
@@ -101,6 +103,47 @@ function collect_over_frames(datakey, file; type = nothing, start=1, stop=nothin
     end
 
     return data
+end
+
+function extract_trajectories_polar(file; type = nothing, start=1, step = 1, stop=nothing)
+
+    
+
+    stopr = isnothing(stop) ? length(file["integration_info"]["save_tax"]) : stop
+
+    types = extract_frame_data("type", file["frames"][string(start)], type=type)
+    
+    t = file["integration_info"]["save_tax"][start:step:stopr]
+
+    R = extract_frame_data("R", file["frames"][string(start)], type=type)
+
+    x = collect_over_frames("x",file,type=type, start = start, step=step, stop = stopr)
+    y = collect_over_frames("y",file,type=type, start = start, step=step, stop = stopr)
+    z = collect_over_frames("z",file,type=type, start = start, step=step, stop = stopr)
+
+    vx = collect_over_frames("vx",file,type=type, start = start, step=step, stop = stopr)
+    vy = collect_over_frames("vy",file,type=type, start = start, step=step, stop = stopr)
+    vz = collect_over_frames("vz",file,type=type, start = start, step=step, stop = stopr)
+
+    px = collect_over_frames("px",file,type=type, start = start, step=step, stop = stopr)
+    py = collect_over_frames("py",file,type=type, start = start, step=step, stop = stopr)
+    pz = collect_over_frames("pz",file,type=type, start = start, step=step, stop = stopr)
+    return PolarTrajectories(types, R,  t, x, y, z, vx, vy, vz, px, py, pz)
+end
+
+mutable struct PolarTrajectories
+    type
+    R
+    t
+    x
+    y
+    z
+    vx
+    vy
+    vz
+    px
+    py
+    pz
 end
 
 function findfile(directory, filepattern)

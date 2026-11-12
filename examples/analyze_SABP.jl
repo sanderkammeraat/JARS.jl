@@ -6,24 +6,10 @@ sa_file = JIO.load_file(joinpath(homedir(), "testdata_JARS","sa_raw_data.h5"))
 
 system_sizes = sa_file["system"]["sizes"]
 step = 10
+
+T1 = JIO.extract_trajectories_polar(sa_file, type = 1, step=1)
+
 begin
-t = sa_file["integration_info"]["save_tax"][1:step:end]
-
-x = JIO.collect_over_frames("x",sa_file,type=1, step=step)
-y = JIO.collect_over_frames("y",sa_file,type=1, step = step)
-z = JIO.collect_over_frames("z",sa_file,type=1,step=step)
-
-vx = JIO.collect_over_frames("vx",sa_file,type=1, step=step)
-vy = JIO.collect_over_frames("vy",sa_file,type=1, step = step)
-vz = JIO.collect_over_frames("vz",sa_file,type=1,step=step)
-
-px = JIO.collect_over_frames("px",sa_file,type=1, step=step)
-py = JIO.collect_over_frames("py",sa_file,type=1, step = step)
-pz = JIO.collect_over_frames("pz",sa_file,type=1, step = step)
-
-R = sa_file["frames"]["1"]["R"]
-types = sa_file["frames"]["1"]["type"]
-
 x0 = sa_file["frames"]["1"]["x"]
 y0 = sa_file["frames"]["1"]["y"]
 
