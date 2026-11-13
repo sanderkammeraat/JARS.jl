@@ -37,7 +37,7 @@ function cf!(analysis_file, raw_data_file; support_raw_data_file = nothing)
 
     #relax again trajectories
     save_tax_ra = support_raw_data_file["integration_info"]["save_tax"]
-    Tra = JIO.extract_trajectories_polar(raw_data_file, start = length(save_tax_ra) -1)
+    Tra = JIO.extract_trajectories_polar(support_raw_data_file, start = length(save_tax_ra) -1)
     karray = analysis_file["system"]["forces"]["pair"]["repulsive_soft_disk"]["karray"]
     D_wb = JOB.construct_D(Tra.x[:,1], Tra.y[:,1], karray, Tra.R[:,1], Tra.type[:,1])
 
@@ -47,7 +47,7 @@ function cf!(analysis_file, raw_data_file; support_raw_data_file = nothing)
     #Boundary particles are stored at the end
     eigenfact = JOB.diagonalize_D(D)
     eigvecs = eigenfact["eigvecs"]
-    projs = JOB.project_on_eigvecs(eigvecs, Ts.x, Ts.y)
+    projs = JOB.project_on_eigvecs(eigvecs, Ts.vx, Ts.vy)
 
     eigvals = eigenfact["eigvals"]
     avg_projs_2 = mean( projs.^2, dims = 2)[1:end]

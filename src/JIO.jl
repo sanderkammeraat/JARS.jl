@@ -186,6 +186,22 @@ function auto_analysis_dir(base_folder, raw_data_file_name_pattern; support_raw_
     return analysis_save_paths, raw_data_file_paths, support_raw_data_file_paths
 
 end
+function auto_movie_dir(base_folder, raw_data_file_name_pattern; support_raw_data_file_name_pattern = nothing, mimic_source_dir_name = "simdata",mimic_target_dir_name = "movies")
+
+    raw_data_file_paths = findfile(base_folder, raw_data_file_name_pattern)
+
+    support_raw_data_file_paths = isnothing(support_raw_data_file_name_pattern) ? nothing : findfile(base_folder, support_raw_data_file_name_pattern)
+
+    seed_dir_names = [ splitpath(dirname(file_path))[end] for file_path in raw_data_file_paths]
+
+    movie_save_folders = replace.( dirname.(dirname.(raw_data_file_paths)), mimic_source_dir_name => mimic_target_dir_name) 
+
+    movie_save_paths = [joinpath(movie_save_folders[i],seed_dir_names[i]*".mp4") for i=eachindex(seed_dir_names)]
+
+
+    return movie_save_paths, raw_data_file_paths, support_raw_data_file_paths
+
+end
 
 
 function auto_ensemble_dir(base_folder, analysis_file_name_pattern; mimic_source_dir_name = "analysis", mimic_target_dir_name = "ensembles")
